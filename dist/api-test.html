@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WEBBFS — testes de API (deploy)</title>
+    <style>
+      :root {
+        --bg: #0f1115;
+        --card: #1a1d24;
+        --border: #2a2f3a;
+        --text: #e8eaed;
+        --muted: #9aa0a6;
+        --ok: #34a853;
+        --fail: #ea4335;
+        --link: #8ab4f8;
+        --input-bg: #12141a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+      a {
+        color: var(--link);
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+      }
+      h1 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 0 0 1.25rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+      input[type='text'],
+      input[type='url'],
+      input[type='email'],
+      input[type='password'],
+      input[type='number'] {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.5rem 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--input-bg);
+        color: var(--text);
+        font: inherit;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1rem;
+        align-items: flex-end;
+        margin-bottom: 0.75rem;
+      }
+      .row > * {
+        flex: 1 1 200px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: #2d333d;
+        color: var(--text);
+        padding: 0.5rem 0.9rem;
+      }
+      button:hover {
+        background: #3a4250;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: #1a73e8;
+        border-color: #1a73e8;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #1967d2;
+        border-color: #1967d2;
+      }
+      .warn {
+        font-size: 0.85rem;
+        color: #f9ab00;
+        margin: 0.5rem 0 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem 0.5rem 0.5rem 0;
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .pass {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .fail {
+        color: var(--fail);
+        font-weight: 600;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 6rem;
+        overflow: auto;
+      }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0 0.75rem;
+        font-size: 0.9rem;
+      }
+      .checkbox input {
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Testes de API (WEBBFS)</h1>
+      <p class="muted">
+        Use esta página no <strong>mesmo host</strong> do deploy (ex. após o build) para evitar
+        bloqueio de CORS nas chamadas a <code class="mono">/api/...</code>. Pós-deploy:
+        <a href="/api-test.html">/api-test.html</a> em
+        <a href="https://webbfs-mauve.vercel.app/">https://webbfs-mauve.vercel.app/</a>
+      </p>
+
+      <div class="card">
+        <div class="row">
+          <div>
+            <label for="base-url">Base URL</label>
+            <input
+              id="base-url"
+              type="url"
+              value="https://webbfs-mauve.vercel.app"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn-primary" id="run-btn">Executar testes</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="h2" style="font-size: 1rem; margin: 0 0 0.5rem">Teste autenticado (opcional)</h2>
+        <p class="muted" style="margin-bottom: 0.75rem">
+          Desligado por padrão. Ao marcar, faz login no Supabase no navegador e executa
+          <code class="mono">POST /api/projeto-ativ-ia</code> — <strong>grava</strong> um registro na
+          tabela se as policies permitirem. Não salve chaves no repositório; use só para teste manual
+          no browser.
+        </p>
+        <div class="checkbox">
+          <input type="checkbox" id="opt-auth" />
+          <label for="opt-auth" style="display: inline; color: var(--text)">Executar teste de insert (201)</label>
+        </div>
+        <div class="row">
+          <div>
+            <label for="sb-url">Supabase URL</label>
+            <input id="sb-url" type="url" placeholder="https://xxxxx.supabase.co" autocomplete="off" />
+          </div>
+          <div>
+            <label for="sb-key">Anon key</label>
+            <input id="sb-key" type="password" placeholder="chave pública (anon)" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="sb-email">Email</label>
+            <input id="sb-email" type="email" autocomplete="off" />
+          </div>
+          <div>
+            <label for="sb-pass">Senha</label>
+            <input id="sb-pass" type="password" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="ins-equipe">cod_ativ_equipe (insert)</label>
+            <input id="ins-equipe" type="number" min="1" value="1" step="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="h2" style="font-size: 1rem; margin: 0 0 0.5rem">Resultados</h2>
+        <p id="summary" class="muted" style="margin-top: 0">—</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Caso</th>
+              <th>OK?</th>
+              <th>HTTP</th>
+              <th>Resposta (trecho)</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script type="module">
+      const $ = (id) => document.getElementById(id);
+
+      function trimBase(url) {
+        return (url || '').replace(/\/+$/, '');
+      }
+
+      function safeJsonText(text) {
+        const max = 800;
+        const t = String(text ?? '');
+        return t.length > max ? `${t.slice(0, max)}…` : t;
+      }
+
+      function addRow(tbody, { name, pass, status, snippet }) {
+        const tr = document.createElement('tr');
+        const tdName = document.createElement('td');
+        tdName.textContent = name;
+        const tdPass = document.createElement('td');
+        tdPass.className = pass ? 'pass' : 'fail';
+        tdPass.textContent = pass ? 'OK' : 'Falha';
+        const tdStatus = document.createElement('td');
+        tdStatus.textContent = String(status ?? '');
+        const tdSnip = document.createElement('td');
+        const pre = document.createElement('div');
+        pre.className = 'mono';
+        pre.textContent = snippet;
+        tdSnip.appendChild(pre);
+        tr.append(tdName, tdPass, tdStatus, tdSnip);
+        tbody.appendChild(tr);
+      }
+
+      async function readResponse(res) {
+        const text = await res.text();
+        let bodySnippet = text;
+        let json = null;
+        try {
+          json = JSON.parse(text);
+          bodySnippet = JSON.stringify(json, null, 0);
+        } catch {
+          // não é JSON: mantém text (ex. HTML)
+        }
+        return {
+          status: res.status,
+          bodySnippet: safeJsonText(bodySnippet),
+          json,
+          raw: text,
+        };
+      }
+
+      const API_PATH = '/api/projeto-ativ-ia';
+
+      const tests = [
+        {
+          name: 'GET / (home)',
+          run: async (base) => {
+            const res = await fetch(`${base}/`, { method: 'GET' });
+            const { status, bodySnippet, raw } = await readResponse(res);
+            const pass =
+              res.status === 200 && (raw.includes('WEBBFS') || raw.toLowerCase().includes('webbfs'));
+            return { pass, status, bodySnippet, detail: 'esperado: 200 e conteúdo com WEBBFS' };
+          },
+        },
+        {
+          name: 'GET /api/projeto-ativ-ia (método não permitido)',
+          run: async (base) => {
+            const res = await fetch(`${base}${API_PATH}`, { method: 'GET' });
+            const { status, bodySnippet, json } = await readResponse(res);
+            const err = json?.error ?? null;
+            const pass = res.status === 405 && err === 'method_not_allowed';
+            return { pass, status, bodySnippet, detail: 'esperado: 405 + method_not_allowed' };
+          },
+        },
+        {
+          name: 'POST /api/… sem Authorization',
+          run: async (base) => {
+            const res = await fetch(`${base}${API_PATH}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+            });
+            const { status, bodySnippet, json } = await readResponse(res);
+            const err = json?.error ?? null;
+            const pass = res.status === 401 && err === 'missing_bearer_token';
+            return { pass, status, bodySnippet, detail: 'esperado: 401 + missing_bearer_token' };
+          },
+        },
+        {
+          name: 'POST /api/… Bearer inválido (corpo válido) → 403',
+          run: async (base) => {
+            const res = await fetch(`${base}${API_PATH}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.invalid',
+              },
+              body: JSON.stringify({
+                cod_ativ_equipe: 1,
+                data_acao: '2026-04-23',
+                hora_acao: '12:00:00',
+                info: { cod_ativ_equipe: 1 },
+              }),
+            });
+            const { status, bodySnippet, json } = await readResponse(res);
+            const err = json?.error ?? null;
+            const pass = res.status === 403 && err === 'invalid_user_jwt';
+            return { pass, status, bodySnippet, detail: 'esperado: 403 + invalid_user_jwt' };
+          },
+        },
+        {
+          name: 'POST /api/… com Bearer, corpo {} → 400 (validação)',
+          run: async (base) => {
+            const res = await fetch(`${base}${API_PATH}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer dummy',
+              },
+              body: JSON.stringify({}),
+            });
+            const { status, bodySnippet, json } = await readResponse(res);
+            const err = json?.error ?? null;
+            const pass = res.status === 400 && err === 'invalid_cod_ativ_equipe';
+            return { pass, status, bodySnippet, detail: 'esperado: 400 + invalid_cod_ativ_equipe' };
+          },
+        },
+      ];
+
+      async function runOptionalInsert201(base) {
+        const supabaseUrl = $('sb-url').value.trim();
+        const anonKey = $('sb-key').value.trim();
+        const email = $('sb-email').value.trim();
+        const password = $('sb-pass').value;
+        const codRaw = Number($('ins-equipe').value);
+        if (!supabaseUrl || !anonKey || !email || !password) {
+          throw new Error('Preencha Supabase URL, anon key, email e senha para o teste 201.');
+        }
+        if (!Number.isInteger(codRaw) || codRaw <= 0) {
+          throw new Error('cod_ativ_equipe deve ser um inteiro positivo.');
+        }
+
+        const { createClient } = await import(
+          'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.104.1/+esm'
+        );
+        const supabase = createClient(supabaseUrl, anonKey);
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          throw new Error(`Login: ${error.message}`);
+        }
+        const token = data.session?.access_token;
+        if (!token) {
+          throw new Error('Sessão sem access_token após login.');
+        }
+
+        const today = new Date();
+        const dataAcao = today.toISOString().slice(0, 10);
+        const res = await fetch(`${base}${API_PATH}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            cod_ativ_equipe: codRaw,
+            data_acao: dataAcao,
+            hora_acao: '12:00:00',
+            info: {
+              cod_ativ_equipe: codRaw,
+              origem: 'api_test_harness',
+            },
+          }),
+        });
+        const { status, bodySnippet, json } = await readResponse(res);
+        const err = json?.error ?? null;
+        const codAtivIa = json?.cod_ativ_ia;
+        const pass = res.status === 201 && typeof codAtivIa === 'number' && !err;
+        return { pass, status, bodySnippet, detail: 'esperado: 201 + cod_ativ_ia' };
+      }
+
+      async function runAll() {
+        const base = trimBase($('base-url').value);
+        const tbody = $('results-body');
+        const summary = $('summary');
+        const runBtn = $('run-btn');
+        const optAuth = $('opt-auth').checked;
+
+        tbody.textContent = '';
+        runBtn.disabled = true;
+        summary.textContent = 'Executando…';
+
+        let passed = 0;
+        let total = 0;
+
+        try {
+          for (const t of tests) {
+            total += 1;
+            try {
+              const r = await t.run(base);
+              if (r.pass) {
+                passed += 1;
+              }
+              addRow(tbody, {
+                name: t.name,
+                pass: r.pass,
+                status: r.status,
+                snippet: r.bodySnippet,
+              });
+            } catch (e) {
+              addRow(tbody, {
+                name: t.name,
+                pass: false,
+                status: '—',
+                snippet: e?.message ?? String(e),
+              });
+            }
+          }
+
+          if (optAuth) {
+            total += 1;
+            try {
+              const r = await runOptionalInsert201(base);
+              if (r.pass) {
+                passed += 1;
+              }
+              addRow(tbody, {
+                name: 'POST /api/… autenticado (insert 201)',
+                pass: r.pass,
+                status: r.status,
+                snippet: r.bodySnippet,
+              });
+            } catch (e) {
+              addRow(tbody, {
+                name: 'POST /api/… autenticado (insert 201)',
+                pass: false,
+                status: '—',
+                snippet: e?.message ?? String(e),
+              });
+            }
+          }
+
+          summary.textContent = `Concluído: ${passed} / ${total} passaram.`;
+        } finally {
+          runBtn.disabled = false;
+        }
+      }
+
+      $('run-btn').addEventListener('click', () => {
+        void runAll();
+      });
+    </script>
+  </body>
+</html>
