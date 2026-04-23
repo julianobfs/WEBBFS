@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WEBBFS</title>
+    <script type="module" crossorigin src="/assets/index-BqwXXhjH.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BHgTB4Nt.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand__title">WEBBFS</div>
+          <div class="brand__subtitle">Integração BFS ↔ App externa</div>
+        </div>
+        <div class="topbar__actions">
+          <span id="session-email" class="muted"></span>
+          <button id="logout-btn" class="btn btn--ghost" type="button" hidden>Sair</button>
+        </div>
+      </header>
+
+      <main class="container">
+        <section id="login-view" class="card" hidden>
+          <h1 class="h1">Acesso</h1>
+          <p class="muted">Faça login para gravar e consultar registros.</p>
+
+          <form id="login-form" class="form">
+            <label class="field">
+              <span class="field__label">Email</span>
+              <input id="login-email" class="input" type="email" autocomplete="email" required />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Senha</span>
+              <input
+                id="login-password"
+                class="input"
+                type="password"
+                autocomplete="current-password"
+                required
+                minlength="6"
+              />
+            </label>
+
+            <div class="row row--gap">
+              <button class="btn btn--primary" type="submit">Entrar</button>
+              <button id="login-clear" class="btn btn--ghost" type="button">Limpar</button>
+            </div>
+
+            <div id="login-message" class="message" role="status" aria-live="polite"></div>
+          </form>
+        </section>
+
+        <section id="records-view" class="card" hidden>
+          <div class="row row--space">
+            <div>
+              <h1 class="h1">Registros</h1>
+              <p class="muted">Consulta na tabela <code>projeto_ativ_ia</code>.</p>
+            </div>
+            <div class="row row--gap">
+              <button id="refresh-btn" class="btn btn--ghost" type="button">Atualizar</button>
+            </div>
+          </div>
+
+          <form id="filters-form" class="filters">
+            <label class="field">
+              <span class="field__label">cod_ativ_equipe</span>
+              <input id="f-cod-ativ-equipe" class="input" type="number" min="1" step="1" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">data_acao (de)</span>
+              <input id="f-date-from" class="input" type="date" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">data_acao (até)</span>
+              <input id="f-date-to" class="input" type="date" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">hora_acao (de)</span>
+              <input id="f-time-from" class="input" type="time" step="1" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">hora_acao (até)</span>
+              <input id="f-time-to" class="input" type="time" step="1" />
+            </label>
+
+            <div class="row row--gap filters__actions">
+              <button class="btn btn--primary" type="submit">Filtrar</button>
+              <button id="filters-clear" class="btn btn--ghost" type="button">Limpar</button>
+            </div>
+          </form>
+
+          <div id="records-message" class="message" role="status" aria-live="polite"></div>
+
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>cod_ativ_ia</th>
+                  <th>cod_ativ_equipe</th>
+                  <th>data_acao</th>
+                  <th>hora_acao</th>
+                  <th>info</th>
+                </tr>
+              </thead>
+              <tbody id="records-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+  </body>
+</html>
+
