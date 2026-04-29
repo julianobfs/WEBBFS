@@ -13,14 +13,6 @@ function getBearerToken(req) {
   return match?.[1] ?? null;
 }
 
-function isIsoDate(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
-
-function isTime(value) {
-  return typeof value === 'string' && /^\d{2}:\d{2}(:\d{2})?$/.test(value);
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -44,24 +36,19 @@ export default async function handler(req, res) {
   }
 
   const codAtivEquipe = Number(body.cod_ativ_equipe);
-  const dataAcao = body.data_acao;
-  const horaAcao = body.hora_acao;
   const info = body.info;
 
   if (!Number.isInteger(codAtivEquipe) || codAtivEquipe <= 0) {
     return json(res, 400, { error: 'invalid_cod_ativ_equipe' });
-  }
-  if (!isIsoDate(dataAcao)) {
-    return json(res, 400, { error: 'invalid_data_acao' });
-  }
-  if (!isTime(horaAcao)) {
-    return json(res, 400, { error: 'invalid_hora_acao' });
   }
   if (!info || typeof info !== 'object' || Array.isArray(info)) {
     return json(res, 400, { error: 'invalid_info' });
   }
   if (!Object.prototype.hasOwnProperty.call(info, 'cod_ativ_equipe')) {
     return json(res, 400, { error: 'info_missing_cod_ativ_equipe' });
+  }
+  if (Number(info.cod_ativ_equipe) !== codAtivEquipe) {
+    return json(res, 400, { error: 'info_cod_ativ_equipe_mismatch' });
   }
 
   // Executa a inserção como o usuário do JWT (RLS aplica).
@@ -79,17 +66,15 @@ export default async function handler(req, res) {
     .from('projeto_ativ_ia')
     .insert({
       cod_ativ_equipe: codAtivEquipe,
-      data_acao: dataAcao,
-      hora_acao: horaAcao.length === 5 ? `${horaAcao}:00` : horaAcao,
       info,
     })
-    .select('cod_ativ_ia')
+    .select('cod_ativ_ia,received_at')
     .single();
 
   if (error) {
     return json(res, 400, { error: 'insert_failed', details: error.message });
   }
 
-  return json(res, 201, { cod_ativ_ia: data.cod_ativ_ia });
+  return json(res, 201, { cod_ativ_ia: data.cod_ativ_ia, received_at: data.received_at });
 }
 

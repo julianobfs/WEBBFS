@@ -10,25 +10,39 @@ function toTime(value) {
   return value.length === 5 ? `${value}:00` : value; // HH:MM -> HH:MM:SS
 }
 
+const TZ_BR = 'America/Sao_Paulo';
+const brDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: TZ_BR,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+const brTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: TZ_BR,
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false,
+});
+
 export async function fetchRecords(filters) {
   let query = supabase
     .from('projeto_ativ_ia')
-    .select('cod_ativ_ia,cod_ativ_equipe,data_acao,hora_acao,info')
-    .order('data_acao', { ascending: false })
-    .order('hora_acao', { ascending: false })
+    .select('cod_ativ_ia,cod_ativ_equipe,received_at,data_acao_br,hora_acao_br,info')
+    .order('received_at', { ascending: false })
     .limit(200);
 
   if (filters.cod_ativ_equipe) query = query.eq('cod_ativ_equipe', filters.cod_ativ_equipe);
 
   const dateFrom = toIsoDate(filters.data_acao_from);
   const dateTo = toIsoDate(filters.data_acao_to);
-  if (dateFrom) query = query.gte('data_acao', dateFrom);
-  if (dateTo) query = query.lte('data_acao', dateTo);
+  if (dateFrom) query = query.gte('data_acao_br', dateFrom);
+  if (dateTo) query = query.lte('data_acao_br', dateTo);
 
   const timeFrom = toTime(filters.hora_acao_from);
   const timeTo = toTime(filters.hora_acao_to);
-  if (timeFrom) query = query.gte('hora_acao', timeFrom);
-  if (timeTo) query = query.lte('hora_acao', timeTo);
+  if (timeFrom) query = query.gte('hora_acao_br', timeFrom);
+  if (timeTo) query = query.lte('hora_acao_br', timeTo);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -59,10 +73,11 @@ export function renderRecords(tbodyEl, records) {
     tdEquipe.textContent = String(r.cod_ativ_equipe);
 
     const tdData = document.createElement('td');
-    tdData.textContent = r.data_acao;
+    const receivedAt = r.received_at ? new Date(r.received_at) : null;
+    tdData.textContent = receivedAt ? brDateFormatter.format(receivedAt) : '';
 
     const tdHora = document.createElement('td');
-    tdHora.textContent = r.hora_acao;
+    tdHora.textContent = receivedAt ? brTimeFormatter.format(receivedAt) : '';
 
     const tdInfo = document.createElement('td');
     const pre = document.createElement('pre');

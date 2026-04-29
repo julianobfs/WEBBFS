@@ -343,8 +343,6 @@
               },
               body: JSON.stringify({
                 cod_ativ_equipe: 1,
-                data_acao: '2026-04-23',
-                hora_acao: '12:00:00',
                 info: { cod_ativ_equipe: 1 },
               }),
             });
@@ -399,8 +397,6 @@
           throw new Error('Sessão sem access_token após login.');
         }
 
-        const today = new Date();
-        const dataAcao = today.toISOString().slice(0, 10);
         const res = await fetch(`${base}${API_PATH}`, {
           method: 'POST',
           headers: {
@@ -409,8 +405,6 @@
           },
           body: JSON.stringify({
             cod_ativ_equipe: codRaw,
-            data_acao: dataAcao,
-            hora_acao: '12:00:00',
             info: {
               cod_ativ_equipe: codRaw,
               origem: 'api_test_harness',
